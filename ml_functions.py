@@ -424,18 +424,24 @@ def plot_pca_scatter(Z, labels=None):
 def prepare_single_data_point(df, new_data_dict, preprocessor):
     """
     Transform a single new data point using the already fitted preprocessor.
-    Fills missing columns with NaN.
+    Fills missing columns with np.nan instead of pd.NA.
     """
     import pandas as pd
+    import numpy as np
+
     # Create DataFrame from new data
     new_df = pd.DataFrame([new_data_dict])
+
     # Ensure all columns from training df exist
     for col in df.columns:
         if col not in new_df.columns:
-            new_df[col] = pd.NA  # fill missing columns with NA
+            new_df[col] = np.nan  # <-- use np.nan, NOT pd.NA
+
     # Reorder columns to match training data
     new_df = new_df[df.columns]
+
     # Transform using the fitted preprocessor
     X_preprocessed = preprocessor.transform(new_df)
     return X_preprocessed
+
 
