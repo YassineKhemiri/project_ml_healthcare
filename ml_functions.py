@@ -315,12 +315,20 @@ def perform_pca(X_preprocessed, variance_threshold=0.8):
 
     loadings = pca_final.components_.T * np.sqrt(pca_final.explained_variance_)
 
+    # return {
+    #     'n_components': n_components_80,
+    #     'explained_variance': explained_variance.tolist(),
+    #     'cumulative_variance': cumulative_variance.tolist(),
+    #     'Z': Z.tolist(),
+    #     'loadings': loadings.tolist()
+    # }
     return {
-        'n_components': n_components_80,
-        'explained_variance': explained_variance.tolist(),
-        'cumulative_variance': cumulative_variance.tolist(),
-        'Z': Z.tolist(),
-        'loadings': loadings.tolist()
+    'n_components': n_components_80,
+    'explained_variance': explained_variance.tolist(),
+    'cumulative_variance': cumulative_variance.tolist(),
+    'Z': Z,                       # keep as numpy array
+    'pca_model': pca_final,       # <-- add fitted PCA
+    'loadings': loadings.tolist()
     }
 
 def perform_kmeans(Z, max_k=10):
