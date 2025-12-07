@@ -40,9 +40,37 @@ np.random.seed(RANDOM_STATE)
 #         'nunique': nunique
 #     }
 
-def load_and_preview_data(file):
-    # If the file is a BytesIO (Streamlit upload), read it directly
-    df = pd.read_csv(file)
+# def load_and_preview_data(file):
+#     # If the file is a BytesIO (Streamlit upload), read it directly
+#     df = pd.read_csv(file)
+
+#     if 'User_ID' in df.columns:
+#         df = df.drop('User_ID', axis=1)
+
+#     shape = df.shape
+#     head = df.head(5).to_dict(orient='records')
+#     dtypes = df.dtypes.to_dict()
+#     nunique = df.nunique().sort_values(ascending=False).to_dict()
+
+#     return {
+#         'shape': shape,
+#         'head': head,
+#         'dtypes': dtypes,
+#         'nunique': nunique
+#     }
+
+def load_and_preview_data(uploaded_file):
+    """
+    Load CSV uploaded via Streamlit and return summary information.
+    """
+    uploaded_file.seek(0)  # reset pointer
+    try:
+        df = pd.read_csv(uploaded_file)
+    except pd.errors.EmptyDataError:
+        return None  # Streamlit will handle empty file
+
+    if df.empty:
+        return None
 
     if 'User_ID' in df.columns:
         df = df.drop('User_ID', axis=1)
