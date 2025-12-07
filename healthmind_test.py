@@ -78,7 +78,7 @@ pd.set_option('display.float_format', '{:.2f}'.format)
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
-%matplotlib inline
+#%matplotlib inline
 
 
 # **Explication :** On fixe le chemin du fichier, on importe les librairies (imputation, encodage, scaling, ACP, KMeans, métriques) et on active l'affichage des graphiques.
