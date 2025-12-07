@@ -119,13 +119,27 @@ if uploaded_file is not None:
         #         ('scaler', RobustScaler())
         #     ]), df_clean.select_dtypes(include=['int64','float64']).columns.tolist())
         # ]))
-        X_new = prepare_single_data_point(df_clean, new_data, preprocessor=fitted_preprocessor)
-        # Predict with KMeans
+        # X_new = prepare_single_data_point(df_clean, new_data, preprocessor=fitted_preprocessor)
+        # # Predict with KMeans
+        # if manual_k >= 2:
+        #     cluster_pred = kmeans.predict(X_new)
+        # else:
+        #     cluster_pred = kmeans_data['labels'][:1]  # just a placeholder
+        # st.success(f"Predicted cluster: {cluster_pred[0]}")
+        # 1. Preprocess the new sample
+        X_new_preprocessed = prepare_single_data_point(df_clean, new_data, preprocessor=fitted_preprocessor)
+        
+        # 2. Transform with the fitted PCA
+        X_new_pca = pca_data['pca_model'].transform(X_new_preprocessed)  # <-- add this
+        
+        # 3. Predict with KMeans
         if manual_k >= 2:
-            cluster_pred = kmeans.predict(X_new)
+            cluster_pred = kmeans.predict(X_new_pca)  # use PCA-transformed data
         else:
-            cluster_pred = kmeans_data['labels'][:1]  # just a placeholder
+            cluster_pred = kmeans_data['labels'][:1]  # placeholder
+        
         st.success(f"Predicted cluster: {cluster_pred[0]}")
+
 
 else:
     st.info("Please upload a CSV file to start.")
