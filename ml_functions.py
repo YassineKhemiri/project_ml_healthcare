@@ -25,20 +25,40 @@ pd.set_option('display.float_format', '{:.2f}'.format)
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
-def load_and_preview_data(file_path):
-    df = pd.read_csv(file_path)
+# def load_and_preview_data(file_path):
+#     df = pd.read_csv(file_path)
+#     if 'User_ID' in df.columns:
+#         df = df.drop('User_ID', axis=1)
+#     shape = df.shape
+#     head = df.head(5).to_dict(orient='records')
+#     dtypes = df.dtypes.to_dict()
+#     nunique = df.nunique().sort_values(ascending=False).to_dict()
+#     return {
+#         'shape': shape,
+#         'head': head,
+#         'dtypes': dtypes,
+#         'nunique': nunique
+#     }
+
+def load_and_preview_data(file):
+    # If the file is a BytesIO (Streamlit upload), read it directly
+    df = pd.read_csv(file)
+
     if 'User_ID' in df.columns:
         df = df.drop('User_ID', axis=1)
+
     shape = df.shape
     head = df.head(5).to_dict(orient='records')
     dtypes = df.dtypes.to_dict()
     nunique = df.nunique().sort_values(ascending=False).to_dict()
+
     return {
         'shape': shape,
         'head': head,
         'dtypes': dtypes,
         'nunique': nunique
     }
+
 
 def calculate_missing_values(df):
     missing_count = df.isnull().sum()
