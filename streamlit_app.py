@@ -12,7 +12,12 @@ st.title("📊 ML Healthcare Interactive Dashboard")
 st.sidebar.header("Upload & Settings")
 uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
 variance_threshold = st.sidebar.slider("PCA variance threshold", min_value=0.5, max_value=0.99, value=0.8, step=0.05)
-manual_k = st.sidebar.number_input("Manual K for K-Means (optional)", min_value=2, max_value=10, value=0)
+# manual_k = st.sidebar.number_input("Manual K for K-Means (optional)", min_value=2, max_value=10, value=0)
+manual_k = st.sidebar.number_input(
+    "Manual K for K-Means (optional, 0 = automatic)", 
+    min_value=0, max_value=10, value=0
+)
+
 
 # Load dataset
 if uploaded_file is not None:
