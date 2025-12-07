@@ -10,7 +10,9 @@ Conversion Date: 2025-12-07T15:31:05.614Z
 # *(Commentaires pro + explication après chaque cellule)*
 
 
-DATA_PATH = r"D:\codePack\OneDrive\Desktop\ProjectsClouds\MentallHealthAwareness\HealthMind_Mental_Health_Data_75k_MultiAlgo.csv"
+#DATA_PATH = r"D:\codePack\OneDrive\Desktop\ProjectsClouds\MentallHealthAwareness\HealthMind_Mental_Health_Data_75k_MultiAlgo.csv"
+DATA_PATH = "HealthMind_Mental_Health_Data_75k_MultiAlgo.csv"
+
 
 import warnings
 warnings.filterwarnings('ignore')
