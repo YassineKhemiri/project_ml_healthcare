@@ -233,6 +233,37 @@ def calculate_correlations(df):
 
     return {'pearson': corr_pearson, 'spearman': corr_spearman, 'high_corr_pairs': high_corr_pairs}
 
+# def preprocess_data(df):
+#     drop_cols = []
+#     if 'User_ID' in df.columns:
+#         drop_cols.append('User_ID')
+#     if 'Risk_Level' in df.columns:
+#         drop_cols.append('Risk_Level')
+#     X = df.drop(columns=drop_cols, errors='ignore')
+
+#     num_features = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
+#     cat_features = X.select_dtypes(exclude=['int64', 'float64']).columns.tolist()
+
+#     num_pipeline = Pipeline([
+#         ('imputer', SimpleImputer(strategy='median')),
+#         ('scaler', RobustScaler())
+#     ])
+
+#     cat_pipeline = Pipeline([
+#         ('imputer', SimpleImputer(strategy='most_frequent')),
+#         ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+#     ])
+
+#     preprocessor = ColumnTransformer([
+#         ('num', num_pipeline, num_features),
+#         ('cat', cat_pipeline, cat_features)
+#     ])
+
+#     X_preprocessed = preprocessor.fit_transform(X)
+#     feature_names = preprocessor.get_feature_names_out().tolist()
+
+#     return X_preprocessed, feature_names
+
 def preprocess_data(df):
     drop_cols = []
     if 'User_ID' in df.columns:
@@ -259,10 +290,13 @@ def preprocess_data(df):
         ('cat', cat_pipeline, cat_features)
     ])
 
-    X_preprocessed = preprocessor.fit_transform(X)
+    X_preprocessed = preprocessor.fit_transform(X)  # fit AND transform
+
     feature_names = preprocessor.get_feature_names_out().tolist()
 
-    return X_preprocessed, feature_names
+    # Return the fitted preprocessor so you can use it later on new data
+    return X_preprocessed, feature_names, preprocessor
+
 
 def perform_pca(X_preprocessed, variance_threshold=0.8):
     n_components_max = min(20, X_preprocessed.shape[1], X_preprocessed.shape[0])
