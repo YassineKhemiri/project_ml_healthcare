@@ -60,7 +60,8 @@ if uploaded_file is not None:
 
     # Preprocessing
     st.subheader("⚙️ Preprocessing")
-    X_preprocessed, feature_names = preprocess_data(df_clean)
+    # X_preprocessed, feature_names = preprocess_data(df_clean)
+    X_preprocessed, feature_names, fitted_preprocessor = preprocess_data(df_clean)
     st.success(f"Preprocessing completed: {X_preprocessed.shape[1]} features")
 
     # PCA
@@ -112,12 +113,13 @@ if uploaded_file is not None:
     
     if st.button("Predict Cluster for New Sample"):
         # Use the preprocessor from preprocessing
-        X_new = prepare_single_data_point(df_clean, new_data, preprocessor=ColumnTransformer([
-            ('num', Pipeline([
-                ('imputer', SimpleImputer(strategy='median')),
-                ('scaler', RobustScaler())
-            ]), df_clean.select_dtypes(include=['int64','float64']).columns.tolist())
-        ]))
+        # X_new = prepare_single_data_point(df_clean, new_data, preprocessor=ColumnTransformer([
+        #     ('num', Pipeline([
+        #         ('imputer', SimpleImputer(strategy='median')),
+        #         ('scaler', RobustScaler())
+        #     ]), df_clean.select_dtypes(include=['int64','float64']).columns.tolist())
+        # ]))
+        X_new = prepare_single_data_point(df_clean, new_data, preprocessor=fitted_preprocessor)
         # Predict with KMeans
         if manual_k >= 2:
             cluster_pred = kmeans.predict(X_new)
