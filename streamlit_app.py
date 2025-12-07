@@ -8,10 +8,12 @@ st.title("📊 ML Healthcare – Data Analysis & Clustering App")
 
 st.write("Upload a CSV file to start exploring your data.")
 
-uploaded_file = st.file_uploader("📁 Upload your dataset", type=["csv"])
+# uploaded_file = st.file_uploader("📁 Upload your dataset", type=["csv"])
 
-# If user uploads a dataset
+uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+
 if uploaded_file is not None:
+    info = load_and_preview_data(uploaded_file)
     df = pd.read_csv(uploaded_file)
     st.subheader("📌 Data Preview")
     st.write(df.head())
