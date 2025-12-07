@@ -71,16 +71,29 @@ if uploaded_file is not None:
 
     # K-Means
     st.subheader("🧬 K-Means Clustering")
+    # if manual_k >= 2:
+    #     k = manual_k
+    #     kmeans = KMeans(n_clusters=k, n_init=20, random_state=42)
+    #     labels = kmeans.fit_predict(np.array(pca_data['Z']))
+    #     st.write(f"Manual K selected: {k}")
+    #     st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), labels))
+    # else:
+    #     kmeans_data = perform_kmeans(np.array(pca_data['Z']))
+    #     st.write(f"Best K (highest silhouette): {kmeans_data['best_k']}")
+    #     st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), kmeans_data['labels']))
+
     if manual_k >= 2:
-        k = manual_k
-        kmeans = KMeans(n_clusters=k, n_init=20, random_state=42)
-        labels = kmeans.fit_predict(np.array(pca_data['Z']))
-        st.write(f"Manual K selected: {k}")
-        st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), labels))
+    k = manual_k
+    kmeans = KMeans(n_clusters=k, n_init=20, random_state=42)
+    labels = kmeans.fit_predict(np.array(pca_data['Z']))
+    st.write(f"Manual K selected: {k}")
+    st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), labels))
     else:
-        kmeans_data = perform_kmeans(np.array(pca_data['Z']))
-        st.write(f"Best K (highest silhouette): {kmeans_data['best_k']}")
-        st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), kmeans_data['labels']))
+    # automatic K selection
+    kmeans_data = perform_kmeans(np.array(pca_data['Z']))
+    st.write(f"Best K (highest silhouette): {kmeans_data['best_k']}")
+    st.pyplot(plot_pca_scatter(np.array(pca_data['Z']), kmeans_data['labels']))
+
 
     # Cluster profiling
     st.subheader("📂 Cluster Profiles")
