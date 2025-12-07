@@ -94,9 +94,10 @@ df = df.drop('User_ID', axis=1)
 print("Shape (lignes, colonnes):", df.shape)
 #display(df.head(5))
 print(df.head(5))
-display(df.dtypes.to_frame("dtype"))
-display(df.nunique().sort_values(ascending=False).to_frame("n_unique"))
-
+#display(df.dtypes.to_frame("dtype"))
+print(df.dtypes.to_frame("dtype"))
+#display(df.nunique().sort_values(ascending=False).to_frame("n_unique"))
+print(df.nunique().sort_values(ascending=False).to_frame("n_unique"))
 
 # **Explication :** On charge les données et on affiche un aperçu, les types et le nombre de valeurs uniques.
 
