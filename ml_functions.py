@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, RobustScaler
+from sklearn.preprocessing import OneHotEncoder, RobustScaler , StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
@@ -16,6 +16,7 @@ from sklearn.metrics import silhouette_score
 import io
 import base64
 import re
+
 
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
@@ -342,3 +343,46 @@ def generate_plot_base64(fig):
     fig.savefig(buf, format='png', bbox_inches='tight')
     buf.seek(0)
     return base64.b64encode(buf.read()).decode('utf-8')
+
+def plot_histograms(df):
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    figs = []
+    for col in num_cols:
+        fig, ax = plt.subplots()
+        sns.histplot(df[col].dropna(), bins=30, kde=True, ax=ax)
+        ax.set_title(f"Histogram of {col}")
+        figs.append(fig)
+    return figs
+
+def plot_boxplots(df):
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    figs = []
+    for col in num_cols:
+        fig, ax = plt.subplots()
+        sns.boxplot(x=df[col], ax=ax)
+        ax.set_title(f"Boxplot of {col}")
+        figs.append(fig)
+    return figs
+
+def plot_pca_scatter(Z, labels=None):
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    if labels is None:
+        ax.scatter(Z[:, 0], Z[:, 1], c='blue', alpha=0.6)
+    else:
+        scatter = ax.scatter(Z[:, 0], Z[:, 1], c=labels, cmap='Set1', alpha=0.6)
+        legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
+        ax.add_artist(legend1)
+    ax.set_xlabel("PC1")
+    ax.set_ylabel("PC2")
+    ax.set_title("PCA Scatter Plot")
+    return fig
+
+def prepare_single_data_point(df, new_data_dict, preprocessor):
+    """
+    Transform a single new data point using the existing preprocessor pipeline
+    """
+    import pandas as pd
+    new_df = pd.DataFrame([new_data_dict])
+    X_preprocessed = preprocessor.transform(new_df)
+    return X_preprocessed
