@@ -84,17 +84,32 @@ if uploaded_file is not None:
     st.pyplot(plot_pca_scatter(Z))
 
     # 7. K-Means
+    # st.subheader("K-Means Clustering")
+    # if manual_k >= 2:
+    #     kmeans_model = KMeans(n_clusters=manual_k, n_init=20, random_state=42)
+    #     labels = kmeans_model.fit_predict(Z)
+    #     st.info(f"Manual mode → K = {manual_k}")
+    # else:
+    #     km_result = perform_kmeans(Z, max_k=10)
+    #     kmeans_model = km_result['model']
+    #     labels = km_result['labels']
+    #     st.info(f"Automatic mode → Best K = {km_result['best_k']} (silhouette)")
+
+    # st.pyplot(plot_pca_scatter(Z, labels))
+
+    # 7. K-Means Clustering
     st.subheader("K-Means Clustering")
+    
     if manual_k >= 2:
         kmeans_model = KMeans(n_clusters=manual_k, n_init=20, random_state=42)
         labels = kmeans_model.fit_predict(Z)
-        st.info(f"Manual mode → K = {manual_k}")
+        st.info(f"Manual K = {manual_k}")
     else:
         km_result = perform_kmeans(Z, max_k=10)
         kmeans_model = km_result['model']
         labels = km_result['labels']
-        st.info(f"Automatic mode → Best K = {km_result['best_k']} (silhouette)")
-
+        st.info(f"Automatic best K = {km_result['best_k']} (silhouette)")
+    
     st.pyplot(plot_pca_scatter(Z, labels))
 
     # 8. Cluster profiling
@@ -106,33 +121,81 @@ if uploaded_file is not None:
     st.write("Most frequent category per cluster")
     st.json(profile['categorical_profiles'])
 
-    # 9. Predict new sample
-    st.subheader("Predict Cluster for a New Person")
-    new_data = {}
-    for col in df_clean.select_dtypes(include=[np.number]).columns:
-        default = float(df_clean[col].median())
-        new_data[col] = st.number_input(
-            col, value=default, step=0.1, format="%.2f"
-        )
+    # # 9. Predict new sample
+    # st.subheader("Predict Cluster for a New Person")
+    # new_data = {}
+    # for col in df_clean.select_dtypes(include=[np.number]).columns:
+    #     default = float(df_clean[col].median())
+    #     new_data[col] = st.number_input(
+    #         col, value=default, step=0.1, format="%.2f"
+    #     )
 
-    for col in df_clean.select_dtypes(exclude=[np.number]).columns:
-        options = [""] + sorted(df_clean[col].dropna().unique().tolist())
-        new_data[col] = st.selectbox(col, options, index=0)
+    # for col in df_clean.select_dtypes(exclude=[np.number]).columns:
+    #     options = [""] + sorted(df_clean[col].dropna().unique().tolist())
+    #     new_data[col] = st.selectbox(col, options, index=0)
 
-    if st.button("Predict Cluster"):
-        # Step 1: put the new row in the same column order as training data
-        new_row_preprocessed = prepare_single_data_point(
-            df_clean, new_data, preprocessor=preprocessor
-        )                                          # → (1, 22) or whatever
+    # if st.button("Predict Cluster"):
+    #     # Step 1: put the new row in the same column order as training data
+    #     new_row_preprocessed = prepare_single_data_point(
+    #         df_clean, new_data, preprocessor=preprocessor
+    #     )                                          # → (1, 22) or whatever
 
-        # Step 2: apply the SAME PCA that was used for training
-        new_row_pca = pca_model.transform(new_row_preprocessed)   # → (1, n_comp)
+    #     # Step 2: apply the SAME PCA that was used for training
+    #     new_row_pca = pca_model.transform(new_row_preprocessed)   # → (1, n_comp)
 
-        # Step 3: predict with the SAME KMeans model
-        predicted_cluster = kmeans_model.predict(new_row_pca)[0]
+    #     # Step 3: predict with the SAME KMeans model
+    #     predicted_cluster = kmeans_model.predict(new_row_pca)[0]
+
+    #     st.success(f"Predicted Cluster: **{predicted_cluster}**")
+    #     st.balloons()
+# ——————————————————————————————————————
+# 9. Predict cluster for a new person
+# ——————————————————————————————————————
+st.subheader("Predict Cluster for a New Person")
+
+st.write("Fill in the information below (numeric + categorical fields):")
+
+new_data = {}
+
+# Numeric inputs
+for col in df_clean.select_dtypes(include=[np.number]).columns:
+    default_val = float(df_clean[col].median())
+    new_data[col] = st.number_input(
+        col,
+        value=default_val,
+        step=0.1,
+        format="%.2f",
+        key=f"num_{col}"
+    )
+
+# Categorical inputs
+for col in df_clean.select_dtypes(exclude=[np.number]).columns:
+    options = sorted(df_clean[col].dropna().unique().tolist())
+    new_data[col] = st.selectbox(
+        col,
+        options=options,
+        index=0,
+        key=f"cat_{col}"
+    )
+
+if st.button("Predict Cluster", type="primary"):
+    try:
+        # 1. Put the new row in the exact same format as training data
+        X_new_preprocessed = prepare_single_data_point(
+            df_clean, new_data, preprocessor=preprocessor  # this is the fitted ColumnTransformer
+        )  # shape → (1, 22) or however many features after OneHot
+
+        # 2. Apply the SAME PCA that was used during training
+        X_new_pca = pca_model.transform(X_new_preprocessed)   # shape → (1, n_components)
+
+        # 3. Predict with the SAME KMeans model
+        predicted_cluster = kmeans_model.predict(X_new_pca)[0]
 
         st.success(f"Predicted Cluster: **{predicted_cluster}**")
         st.balloons()
+
+    except Exception as e:
+        st.error(f"Prediction error: {e}")
 
 else:
     st.info("Please upload a CSV file (HealthMind_Mental_Health_Data_75k_MultiAlgo.csv) to start.")
