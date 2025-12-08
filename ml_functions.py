@@ -431,28 +431,24 @@ def plot_pca_scatter(Z, labels=None):
 #     X_preprocessed = preprocessor.transform(new_df)
 #     return X_preprocessed
 
-def prepare_single_data_point(df, new_data_dict, preprocessor):
+def prepare_single_data_point(df_clean, new_data, preprocessor):
     """
-    Transform a single new data point using the already fitted preprocessor.
-    Fills missing columns with np.nan instead of pd.NA.
+    Preprocess a single new sample using the same fitted preprocessor used for training.
     """
-    import pandas as pd
-    import numpy as np
+    # 1. Create a DataFrame with all training columns
+    full_columns = df_clean.columns.tolist()
 
-    # Create DataFrame from new data
-    new_df = pd.DataFrame([new_data_dict])
+    # 2. Build a row with ALL columns (missing categorical columns get NaN)
+    row = {col: new_data.get(col, np.nan) for col in full_columns}
 
-    # Ensure all columns from training df exist
-    for col in df.columns:
-        if col not in new_df.columns:
-            new_df[col] = np.nan  # <-- use np.nan, NOT pd.NA
+    # 3. Convert to DataFrame
+    new_df = pd.DataFrame([row])
 
-    # Reorder columns to match training data
-    new_df = new_df[df.columns]
-
-    # Transform using the fitted preprocessor
+    # 4. Apply the *fitted* preprocessor
     X_preprocessed = preprocessor.transform(new_df)
+
     return X_preprocessed
+
 def export_model(preprocessor, pca_model, kmeans_model, export_path="exported_model"):
     """
     Sauvegarde le pipeline ML complet :
