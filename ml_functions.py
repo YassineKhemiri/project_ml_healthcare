@@ -16,6 +16,8 @@ from sklearn.metrics import silhouette_score
 import io
 import base64
 import re
+import joblib
+import os
 
 
 plt.style.use('seaborn-v0_8-darkgrid')
@@ -451,5 +453,27 @@ def prepare_single_data_point(df, new_data_dict, preprocessor):
     # Transform using the fitted preprocessor
     X_preprocessed = preprocessor.transform(new_df)
     return X_preprocessed
+def export_model(preprocessor, pca_model, kmeans_model, export_path="exported_model"):
+    """
+    Sauvegarde le pipeline ML complet :
+        - preprocessor : OneHot + Imputation + Scaling
+        - pca_model : modèle PCA entraîné
+        - kmeans_model : clustering final
+
+    Le tout est sauvegardé dans un dossier sous forme de fichiers .joblib
+    """
+
+    if not os.path.exists(export_path):
+        os.makedirs(export_path)
+
+    joblib.dump(preprocessor, f"{export_path}/preprocessor.joblib")
+    joblib.dump(pca_model, f"{export_path}/pca_model.joblib")
+    joblib.dump(kmeans_model, f"{export_path}/kmeans_model.joblib")
+
+    return {
+        "preprocessor_path": f"{export_path}/preprocessor.joblib",
+        "pca_model_path": f"{export_path}/pca_model.joblib",
+        "kmeans_model_path": f"{export_path}/kmeans_model.joblib"
+    }
 
 
