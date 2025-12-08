@@ -5,9 +5,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy import stats
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, RobustScaler , StandardScaler
+from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
@@ -15,10 +14,8 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import io
 import base64
-import re
 import joblib
 import os
-
 
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
@@ -28,49 +25,15 @@ pd.set_option('display.float_format', '{:.2f}'.format)
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
-# def load_and_preview_data(file_path):
-#     df = pd.read_csv(file_path)
-#     if 'User_ID' in df.columns:
-#         df = df.drop('User_ID', axis=1)
-#     shape = df.shape
-#     head = df.head(5).to_dict(orient='records')
-#     dtypes = df.dtypes.to_dict()
-#     nunique = df.nunique().sort_values(ascending=False).to_dict()
-#     return {
-#         'shape': shape,
-#         'head': head,
-#         'dtypes': dtypes,
-#         'nunique': nunique
-#     }
-
-# def load_and_preview_data(file):
-#     # If the file is a BytesIO (Streamlit upload), read it directly
-#     df = pd.read_csv(file)
-
-#     if 'User_ID' in df.columns:
-#         df = df.drop('User_ID', axis=1)
-
-#     shape = df.shape
-#     head = df.head(5).to_dict(orient='records')
-#     dtypes = df.dtypes.to_dict()
-#     nunique = df.nunique().sort_values(ascending=False).to_dict()
-
-#     return {
-#         'shape': shape,
-#         'head': head,
-#         'dtypes': dtypes,
-#         'nunique': nunique
-#     }
-
+# -------------------------------
+# Data Loading & Preview
+# -------------------------------
 def load_and_preview_data(uploaded_file):
-    """
-    Load CSV uploaded via Streamlit and return summary information.
-    """
-    uploaded_file.seek(0)  # reset pointer
+    uploaded_file.seek(0)
     try:
         df = pd.read_csv(uploaded_file)
     except pd.errors.EmptyDataError:
-        return None  # Streamlit will handle empty file
+        return None
 
     if df.empty:
         return None
@@ -78,19 +41,16 @@ def load_and_preview_data(uploaded_file):
     if 'User_ID' in df.columns:
         df = df.drop('User_ID', axis=1)
 
-    shape = df.shape
-    head = df.head(5).to_dict(orient='records')
-    dtypes = df.dtypes.to_dict()
-    nunique = df.nunique().sort_values(ascending=False).to_dict()
-
     return {
-        'shape': shape,
-        'head': head,
-        'dtypes': dtypes,
-        'nunique': nunique
+        'shape': df.shape,
+        'head': df.head(5).to_dict(orient='records'),
+        'dtypes': df.dtypes.to_dict(),
+        'nunique': df.nunique().sort_values(ascending=False).to_dict()
     }
 
-
+# -------------------------------
+# Missing Values & Stats
+# -------------------------------
 def calculate_missing_values(df):
     missing_count = df.isnull().sum()
     missing_pct = (missing_count / len(df)) * 100
@@ -109,60 +69,9 @@ def get_descriptive_stats(df):
         }
     return {'numerical': num_stats, 'categorical': cat_stats}
 
-def get_distributions(df):
-    num_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    dist_data = {}
-    for col in num_cols:
-        hist, bins = np.histogram(df[col].dropna(), bins=30)
-        dist_data[col] = {'bins': bins.tolist(), 'counts': hist.tolist()}
-    return dist_data
-
-def get_boxplot_data(df):
-    num_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    box_data = {}
-    for col in num_cols:
-        q1 = df[col].quantile(0.25)
-        q3 = df[col].quantile(0.75)
-        iqr = q3 - q1
-        box_data[col] = {'min': df[col].min(), 'q1': q1, 'median': df[col].median(), 'q3': q3, 'max': df[col].max(), 'iqr': iqr}
-    return box_data
-
-def get_risk_distribution(df):
-    if 'Risk_Level' in df.columns:
-        counts = df['Risk_Level'].value_counts().to_dict()
-        percentages = (df['Risk_Level'].value_counts(normalize=True) * 100).round(2).to_dict()
-        return {'counts': counts, 'percentages': percentages}
-    return None
-
-def calculate_quartiles_iqr(df):
-    num_cols = df.select_dtypes(include=['float64', 'int64']).columns
-    iqr_report = []
-    for col in num_cols:
-        s = df[col].dropna()
-        if len(s) == 0:
-            continue
-        Q1 = s.quantile(0.25)
-        Q2 = s.quantile(0.50)
-        Q3 = s.quantile(0.75)
-        IQR = Q3 - Q1
-        lower_bound = Q1 - 1.5 * IQR
-        upper_bound = Q3 + 1.5 * IQR
-        outliers = ((s < lower_bound) | (s > upper_bound))
-        outlier_count = int(outliers.sum())
-        outlier_pct = (outlier_count / len(s) * 100)
-        iqr_report.append({
-            'Variable': col,
-            'Q1': Q1,
-            'Median': Q2,
-            'Q3': Q3,
-            'IQR': IQR,
-            'Lower_Bound': lower_bound,
-            'Upper_Bound': upper_bound,
-            'Outliers_Count': outlier_count,
-            'Outliers_Pct': outlier_pct
-        })
-    return sorted(iqr_report, key=lambda x: x['Outliers_Count'], reverse=True)
-
+# -------------------------------
+# Data Cleaning
+# -------------------------------
 def clean_data(df):
     n_before = len(df)
     df = df.drop_duplicates(ignore_index=True)
@@ -185,16 +94,6 @@ def clean_data(df):
                 df[col] = df[col].clip(lower=lo, upper=hi)
             clipped[col] = n_clipped
 
-    if 'Sleep_Hours_Night' in df.columns:
-        n_invalid_sleep = (df['Sleep_Hours_Night'] < 0).sum()
-        if n_invalid_sleep > 0:
-            df.loc[df['Sleep_Hours_Night'] < 0, 'Sleep_Hours_Night'] = np.nan
-
-    if 'Exercise_Freq_Week' in df.columns:
-        n_invalid_ex = (df['Exercise_Freq_Week'] > 7).sum()
-        if n_invalid_ex > 0:
-            df.loc[df['Exercise_Freq_Week'] > 7, 'Exercise_Freq_Week'] = np.nan
-
     num_cols = df.select_dtypes(include='number').columns.tolist()
     cat_cols = df.select_dtypes(exclude='number').columns.tolist()
 
@@ -212,60 +111,9 @@ def clean_data(df):
         'remaining_missing': df.isna().sum().sum()
     }
 
-def calculate_correlations(df):
-    drop_cols = []
-    if 'User_ID' in df.columns:
-        drop_cols.append('User_ID')
-    if 'Risk_Level' in df.columns:
-        drop_cols.append('Risk_Level')
-    X = df.drop(columns=drop_cols, errors='ignore')
-    num_only = X.select_dtypes(include=['int64', 'float64'])
-    corr_pearson = num_only.corr(method='pearson').to_dict()
-    corr_spearman = num_only.corr(method='spearman').to_dict()
-
-    high_corr_pairs = []
-    for i in range(len(num_only.columns)):
-        for j in range(i+1, len(num_only.columns)):
-            if abs(corr_pearson[num_only.columns[i]][num_only.columns[j]]) > 0.8:
-                high_corr_pairs.append({
-                    'Var1': num_only.columns[i],
-                    'Var2': num_only.columns[j],
-                    'Correlation': corr_pearson[num_only.columns[i]][num_only.columns[j]]
-                })
-
-    return {'pearson': corr_pearson, 'spearman': corr_spearman, 'high_corr_pairs': high_corr_pairs}
-
-# def preprocess_data(df):
-#     drop_cols = []
-#     if 'User_ID' in df.columns:
-#         drop_cols.append('User_ID')
-#     if 'Risk_Level' in df.columns:
-#         drop_cols.append('Risk_Level')
-#     X = df.drop(columns=drop_cols, errors='ignore')
-
-#     num_features = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
-#     cat_features = X.select_dtypes(exclude=['int64', 'float64']).columns.tolist()
-
-#     num_pipeline = Pipeline([
-#         ('imputer', SimpleImputer(strategy='median')),
-#         ('scaler', RobustScaler())
-#     ])
-
-#     cat_pipeline = Pipeline([
-#         ('imputer', SimpleImputer(strategy='most_frequent')),
-#         ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
-#     ])
-
-#     preprocessor = ColumnTransformer([
-#         ('num', num_pipeline, num_features),
-#         ('cat', cat_pipeline, cat_features)
-#     ])
-
-#     X_preprocessed = preprocessor.fit_transform(X)
-#     feature_names = preprocessor.get_feature_names_out().tolist()
-
-#     return X_preprocessed, feature_names
-
+# -------------------------------
+# Preprocessing
+# -------------------------------
 def preprocess_data(df):
     drop_cols = []
     if 'User_ID' in df.columns:
@@ -292,71 +140,56 @@ def preprocess_data(df):
         ('cat', cat_pipeline, cat_features)
     ])
 
-    X_preprocessed = preprocessor.fit_transform(X)  # fit AND transform
-
+    X_preprocessed = preprocessor.fit_transform(X)
     feature_names = preprocessor.get_feature_names_out().tolist()
 
-    # Return the fitted preprocessor so you can use it later on new data
     return X_preprocessed, feature_names, preprocessor
 
-
+# -------------------------------
+# PCA
+# -------------------------------
 def perform_pca(X_preprocessed, variance_threshold=0.8):
     n_components_max = min(20, X_preprocessed.shape[1], X_preprocessed.shape[0])
     pca_init = PCA(n_components=n_components_max, random_state=RANDOM_STATE)
     Z_init = pca_init.fit_transform(X_preprocessed)
 
-    explained_variance = pca_init.explained_variance_ratio_
-    cumulative_variance = np.cumsum(explained_variance)
-
-    n_components_80 = np.argmax(cumulative_variance >= variance_threshold) + 1
-    if cumulative_variance[-1] < variance_threshold:
-        n_components_80 = len(cumulative_variance)
-
-    pca_final = PCA(n_components=n_components_80, random_state=RANDOM_STATE)
+    cumulative_variance = np.cumsum(pca_init.explained_variance_ratio_)
+    n_components_final = np.argmax(cumulative_variance >= variance_threshold) + 1
+    pca_final = PCA(n_components=n_components_final, random_state=RANDOM_STATE)
     Z = pca_final.fit_transform(X_preprocessed)
 
     loadings = pca_final.components_.T * np.sqrt(pca_final.explained_variance_)
 
-    # return {
-    #     'n_components': n_components_80,
-    #     'explained_variance': explained_variance.tolist(),
-    #     'cumulative_variance': cumulative_variance.tolist(),
-    #     'Z': Z.tolist(),
-    #     'loadings': loadings.tolist()
-    # }
     return {
-    'n_components': n_components_80,
-    'explained_variance': explained_variance.tolist(),
-    'cumulative_variance': cumulative_variance.tolist(),
-    'Z': Z,                       # keep as numpy array
-    'pca_model': pca_final,       # <-- add fitted PCA
-    'loadings': loadings.tolist()
+        'n_components': n_components_final,
+        'Z': Z,
+        'pca_model': pca_final,
+        'loadings': loadings.tolist()
     }
 
+# -------------------------------
+# KMeans
+# -------------------------------
 def perform_kmeans(Z, max_k=10):
     silhouette_scores = []
-    inertias = []
     for k in range(2, max_k + 1):
         kmeans = KMeans(n_clusters=k, n_init=20, random_state=RANDOM_STATE)
         labels = kmeans.fit_predict(Z)
-        score = silhouette_score(Z, labels)
-        silhouette_scores.append(score)
-        inertias.append(kmeans.inertia_)
+        silhouette_scores.append(silhouette_score(Z, labels))
 
     best_k = np.argmax(silhouette_scores) + 2
-
     kmeans_final = KMeans(n_clusters=best_k, n_init=20, random_state=RANDOM_STATE)
     labels = kmeans_final.fit_predict(Z)
 
     return {
-        'k_range': list(range(2, max_k + 1)),
-        'silhouette_scores': silhouette_scores,
-        'inertias': inertias,
         'best_k': best_k,
         'labels': labels,
-        'centroids': kmeans_final.cluster_centers_.tolist()
+        'model': kmeans_final
     }
 
+# -------------------------------
+# Cluster Profiling
+# -------------------------------
 def profile_clusters(df, labels):
     df_copy = df.copy()
     df_copy['cluster'] = labels
@@ -364,34 +197,33 @@ def profile_clusters(df, labels):
     cat_cols = df_copy.select_dtypes(exclude=[np.number]).columns.tolist()
 
     profiles_num = df_copy.groupby('cluster')[num_cols].mean().to_dict(orient='records')
-    profiles_cat = {}
-    for col in cat_cols:
-        profiles_cat[col] = df_copy.groupby('cluster')[col].agg(lambda x: x.mode()[0] if not x.empty else None).to_dict()
-
-    if 'Risk_Level' in df_copy.columns:
-        risk_dist = df_copy.groupby('cluster')['Risk_Level'].value_counts(normalize=True).unstack().fillna(0).to_dict(orient='records')
-    else:
-        risk_dist = None
+    profiles_cat = {col: df_copy.groupby('cluster')[col].agg(lambda x: x.mode()[0] if not x.empty else None).to_dict()
+                    for col in cat_cols}
 
     cluster_sizes = df_copy['cluster'].value_counts().sort_index().to_dict()
 
     return {
         'numerical_profiles': profiles_num,
         'categorical_profiles': profiles_cat,
-        'risk_distribution': risk_dist,
         'cluster_sizes': cluster_sizes
     }
 
-def generate_plot_base64(fig):
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight')
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('utf-8')
+# -------------------------------
+# New Sample
+# -------------------------------
+def prepare_single_data_point(df_clean, new_data, preprocessor):
+    full_columns = df_clean.columns.tolist()
+    row = {col: new_data.get(col, np.nan) for col in full_columns}
+    new_df = pd.DataFrame([row])
+    X_preprocessed = preprocessor.transform(new_df)
+    return X_preprocessed
 
+# -------------------------------
+# Plotting
+# -------------------------------
 def plot_histograms(df):
-    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     figs = []
-    for col in num_cols:
+    for col in df.select_dtypes(include=[np.number]).columns:
         fig, ax = plt.subplots()
         sns.histplot(df[col].dropna(), bins=30, kde=True, ax=ax)
         ax.set_title(f"Histogram of {col}")
@@ -399,9 +231,8 @@ def plot_histograms(df):
     return figs
 
 def plot_boxplots(df):
-    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     figs = []
-    for col in num_cols:
+    for col in df.select_dtypes(include=[np.number]).columns:
         fig, ax = plt.subplots()
         sns.boxplot(x=df[col], ax=ax)
         ax.set_title(f"Boxplot of {col}")
@@ -409,7 +240,6 @@ def plot_boxplots(df):
     return figs
 
 def plot_pca_scatter(Z, labels=None):
-    import matplotlib.pyplot as plt
     fig, ax = plt.subplots()
     if labels is None:
         ax.scatter(Z[:, 0], Z[:, 1], c='blue', alpha=0.6)
@@ -421,55 +251,3 @@ def plot_pca_scatter(Z, labels=None):
     ax.set_ylabel("PC2")
     ax.set_title("PCA Scatter Plot")
     return fig
-
-# def prepare_single_data_point(df, new_data_dict, preprocessor):
-#     """
-#     Transform a single new data point using the existing preprocessor pipeline
-#     """
-#     import pandas as pd
-#     new_df = pd.DataFrame([new_data_dict])
-#     X_preprocessed = preprocessor.transform(new_df)
-#     return X_preprocessed
-
-def prepare_single_data_point(df_clean, new_data, preprocessor):
-    """
-    Preprocess a single new sample using the same fitted preprocessor used for training.
-    """
-    # 1. Create a DataFrame with all training columns
-    full_columns = df_clean.columns.tolist()
-
-    # 2. Build a row with ALL columns (missing categorical columns get NaN)
-    row = {col: new_data.get(col, np.nan) for col in full_columns}
-
-    # 3. Convert to DataFrame
-    new_df = pd.DataFrame([row])
-
-    # 4. Apply the *fitted* preprocessor
-    X_preprocessed = preprocessor.transform(new_df)
-
-    return X_preprocessed
-
-def export_model(preprocessor, pca_model, kmeans_model, export_path="exported_model"):
-    """
-    Sauvegarde le pipeline ML complet :
-        - preprocessor : OneHot + Imputation + Scaling
-        - pca_model : modèle PCA entraîné
-        - kmeans_model : clustering final
-
-    Le tout est sauvegardé dans un dossier sous forme de fichiers .joblib
-    """
-
-    if not os.path.exists(export_path):
-        os.makedirs(export_path)
-
-    joblib.dump(preprocessor, f"{export_path}/preprocessor.joblib")
-    joblib.dump(pca_model, f"{export_path}/pca_model.joblib")
-    joblib.dump(kmeans_model, f"{export_path}/kmeans_model.joblib")
-
-    return {
-        "preprocessor_path": f"{export_path}/preprocessor.joblib",
-        "pca_model_path": f"{export_path}/pca_model.joblib",
-        "kmeans_model_path": f"{export_path}/kmeans_model.joblib"
-    }
-
-
